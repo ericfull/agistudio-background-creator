@@ -16,7 +16,7 @@ npm run build     # type check + production build
 
 ## What it does
 
-- **Strict AGI pictures:** 160×168 with 2:1 wide pixels, 16 EGA colors, and AGI's own line, fill and pen rules. Three screens: Visual, Priority (depth bands 4–15) and Control (walls, conditional walls, triggers, water).
+- **Strict AGI pictures:** 160×168 with 2:1 wide pixels shown in the 4:3 CRT shape the games were seen in (toggle for raw pixels), 16 EGA colors, and AGI's own line, fill and pen rules. Three screens: Visual, Priority (depth bands 4–15) and Control (walls, conditional walls, triggers, water).
 - **Element library:** Nature, Fantasy, Sci-fi, Modern and Spooky elements. Each has sliders, a random variation seed and recolorable color roles. Elements that stand on the ground get their depth from their base, and scale with perspective.
 - **Mix, match, augment:** layers, drag and scale on the canvas, hand-drawn paint layers (line, step line, fill, pen with AGI brushes and splatter), "explode" an element into editable commands, stamp sprites into the picture.
 - **Recolor:** per-element color roles, a room-wide color swap (bakeable), and mood remaps (Dusk, Night, Storm, Autumn, Winter, Haunted).

@@ -21,7 +21,7 @@ import { BUILTIN_VIEWS } from '../../sprites/library'
 import { blankCel, cloneView, floodCel, loopCelCount, mirrorCel, newView, resizeCel } from '../../sprites/edit'
 import { roleColor } from '../../sprites/render'
 import { ROLE_SLOT_BASE, SPRITE_T, type View } from '../../sprites/types'
-import { actions, beginGesture, endGesture, useApp } from '../../state/store'
+import { actions, beginGesture, endGesture, useApp, useRowScale } from '../../state/store'
 import { THEMES, type Theme } from '../../state/types'
 import { EgaPicker, Swatch } from '../common/EgaPicker'
 import { Field, Select, Slider } from '../common/Field'
@@ -31,6 +31,7 @@ import { SidePanel } from '../common/SidePanel'
 import { UI } from '../tokens'
 import { CelView, LoopPreview } from './CelView'
 import { DND_VIEW } from '../rooms/RoomCanvas'
+import { AspectToggle } from '../rooms/CanvasArea'
 
 type SpriteTool = 'pencil' | 'eraser' | 'fill' | 'picker'
 
@@ -110,13 +111,16 @@ function PixelEditor({ view, tool, onion, grid, zoom }: { view: View; tool: Spri
   const src = mirrored ? view.loops[loop!.mirrorOf!] : loop
   const cel = src?.cels[celIdx]
   const px = zoom
+  const rowScale = useRowScale()
+  /** Top of a pixel row in canvas px (rows are rowScale tall; rounded so edges stay crisp). */
+  const rowY = (y: number) => Math.round(y * px * rowScale)
 
   useEffect(() => {
     const cv = ref.current
     if (!cv || !cel) return
     const dpr = window.devicePixelRatio || 1
     const W = cel.w * px * 2
-    const H = cel.h * px
+    const H = rowY(cel.h)
     cv.width = W * dpr
     cv.height = H * dpr
     cv.style.width = `${W}px`
@@ -127,7 +131,7 @@ function PixelEditor({ view, tool, onion, grid, zoom }: { view: View; tool: Spri
     for (let y = 0; y < cel.h; y++) {
       for (let x = 0; x < cel.w; x++) {
         ctx.fillStyle = (x + y) % 2 ? UI.bg : UI.panel
-        ctx.fillRect(x * px * 2, y * px, px * 2, px)
+        ctx.fillRect(x * px * 2, rowY(y), px * 2, rowY(y + 1) - rowY(y))
       }
     }
     const value = (c: typeof cel, x: number, y: number) => {
@@ -144,7 +148,7 @@ function PixelEditor({ view, tool, onion, grid, zoom }: { view: View; tool: Spri
           const v = value(prev, x, y)
           if (v === SPRITE_T) continue
           ctx.fillStyle = EGA_HEX[v]
-          ctx.fillRect(x * px * 2, y * px, px * 2, px)
+          ctx.fillRect(x * px * 2, rowY(y), px * 2, rowY(y + 1) - rowY(y))
         }
       ctx.globalAlpha = 1
     }
@@ -153,7 +157,7 @@ function PixelEditor({ view, tool, onion, grid, zoom }: { view: View; tool: Spri
         const v = value(cel, x, y)
         if (v === SPRITE_T) continue
         ctx.fillStyle = EGA_HEX[v]
-        ctx.fillRect(x * px * 2, y * px, px * 2, px)
+        ctx.fillRect(x * px * 2, rowY(y), px * 2, rowY(y + 1) - rowY(y))
       }
     }
     if (grid && px >= 6) {
@@ -165,18 +169,18 @@ function PixelEditor({ view, tool, onion, grid, zoom }: { view: View; tool: Spri
         ctx.lineTo(x * px * 2 + 0.5, H)
       }
       for (let y = 1; y < cel.h; y++) {
-        ctx.moveTo(0, y * px + 0.5)
-        ctx.lineTo(W, y * px + 0.5)
+        ctx.moveTo(0, rowY(y) + 0.5)
+        ctx.lineTo(W, rowY(y) + 0.5)
       }
       ctx.stroke()
     }
-  }, [view, cel, celIdx, src, mirrored, onion, grid, px])
+  }, [view, cel, celIdx, src, mirrored, onion, grid, px, rowScale])
 
   if (!loop || !cel) return null
 
   const at = (e: React.PointerEvent): [number, number] => {
     const r = ref.current!.getBoundingClientRect()
-    return [Math.floor((e.clientX - r.left) / (px * 2)), Math.floor((e.clientY - r.top) / px)]
+    return [Math.floor((e.clientX - r.left) / (px * 2)), Math.floor((e.clientY - r.top) / (px * rowScale))]
   }
   const setPixels = (pts: [number, number][], v: number) => {
     actions.updateView(view.id, (d) => {
@@ -297,6 +301,7 @@ function SpriteCenter() {
         <div className="flex items-center gap-0.5 rounded-md border border-line bg-panel p-0.5 shadow-panel">
           <IconButton icon={Layers} tip="Onion skin (show previous cel)" active={onion} onClick={() => setOnion(!onion)} />
           <IconButton icon={Grid3x3} tip="Pixel grid" active={grid} onClick={() => setGrid(!grid)} />
+          <AspectToggle />
           <div className="mx-1 h-5 w-px bg-line" />
           <IconButton icon={Minus} tip="Zoom out" disabled={zoom <= 3} onClick={() => setZoom(zoom - 1)} />
           <span className="w-8 text-center text-[11px] text-muted">{zoom}×</span>

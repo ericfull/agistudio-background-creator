@@ -8,6 +8,7 @@ import {
   Maximize,
   ImagePlus,
   Minus,
+  Monitor,
   MousePointer2,
   PaintBucket,
   Pipette,
@@ -23,7 +24,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { EGA_NAMES } from '../../agi/palette'
 import { bandForY } from '../../agi/priority'
-import { useApp, type Screen, type Tool } from '../../state/store'
+import { useApp, useRowScale, type Screen, type Tool } from '../../state/store'
 import { EgaGrid, Swatch } from '../common/EgaPicker'
 import { Segmented } from '../common/Field'
 import { IconButton } from '../common/IconButton'
@@ -214,20 +215,36 @@ function StatusBar() {
 /** Largest zoom (in half steps) that fits the picture in a box. */
 export function useFitZoom(pad = 56, extraH = 24) {
   const ref = useRef<HTMLDivElement>(null)
+  const rowScale = useRowScale()
   const [fit, setFit] = useState(2)
   useEffect(() => {
     const el = ref.current
     if (!el) return
-    const ro = new ResizeObserver(() => {
+    const measure = () => {
       const w = el.clientWidth - pad
       const h = el.clientHeight - pad - extraH
-      const z = Math.floor(Math.min(w / 320, h / 168) * 2) / 2
+      const z = Math.floor(Math.min(w / 320, h / (168 * rowScale)) * 2) / 2
       setFit(Math.max(0.5, Math.min(6, z)))
-    })
+    }
+    const ro = new ResizeObserver(measure)
     ro.observe(el)
+    measure()
     return () => ro.disconnect()
-  }, [pad, extraH])
+  }, [pad, extraH, rowScale])
   return [ref, fit] as const
+}
+
+/** Toggle between the 4:3 CRT screen shape and raw 2:1 pixels. */
+export function AspectToggle() {
+  const on = useApp((s) => s.crtAspect)
+  return (
+    <IconButton
+      icon={Monitor}
+      tip={on ? 'Showing the 4:3 CRT screen shape. Click for raw 2:1 pixels' : 'Showing raw 2:1 pixels. Click for the 4:3 CRT screen shape'}
+      active={on}
+      onClick={() => useApp.getState().setUi({ crtAspect: !on })}
+    />
+  )
 }
 
 export function CanvasArea() {
@@ -268,6 +285,7 @@ export function CanvasArea() {
           <IconButton icon={Sunset} tip="Horizon guide" active={s.guides.horizon} onClick={() => toggleGuide('horizon')} />
           <IconButton icon={Rows3} tip="Priority band guides" active={s.guides.bands} onClick={() => toggleGuide('bands')} />
           <IconButton icon={Grid3x3} tip="Grid" tipKey="G" active={s.guides.grid} onClick={() => toggleGuide('grid')} />
+          <AspectToggle />
           <TraceButton />
           <div className="mx-1 h-5 w-px bg-line" />
           <IconButton icon={Minus} tip="Zoom out" tipKey="−" disabled={zoom <= 0.5} onClick={() => setZoom(zoom - 0.5)} />

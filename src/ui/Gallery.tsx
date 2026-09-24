@@ -18,7 +18,7 @@ export function Gallery() {
           <div key={d.id} className="flex items-center gap-2" data-tip={d.id}>
             <span className="w-40 shrink-0 truncate text-[12px] text-muted">{d.name}</span>
             {[1, 2, 3, 4, 5].map((seed) => (
-              <img key={seed} src={elementThumb(d.id, 240, 126, seed) ?? ''} alt="" className="rounded border border-line bg-bg" style={{ width: 240, height: 126, imageRendering: 'pixelated' }} />
+              <img key={seed} src={elementThumb(d.id, 240, 151, seed, 1.2) ?? ''} alt="" className="rounded border border-line bg-bg" style={{ width: 240, height: 151, imageRendering: 'pixelated' }} />
             ))}
           </div>
         ))}

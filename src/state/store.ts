@@ -2,6 +2,7 @@ import { produce, type Draft } from 'immer'
 import { create } from 'zustand'
 import { temporal } from 'zundo'
 import type { PenShape } from '../agi/commands'
+import { CRT_ROW_SCALE } from '../agi/constants'
 import { getElement } from '../library'
 import { elementLayer, newRoom, uid } from './factory'
 import type { Dir, Layer, Project, Room, Theme } from './types'
@@ -22,6 +23,8 @@ export interface UiState {
   screen: Screen
   zoom: number
   zoomFit: boolean
+  /** Show pictures with the 4:3 CRT shape (rows 1.2x taller) instead of raw 2:1 pixels. */
+  crtAspect: boolean
   /** Zoom that currently fits the window (set by the canvas area). */
   fitZoom: number
   tool: Tool
@@ -84,6 +87,7 @@ export const useApp = create<AppState>()(
       screen: 'visual',
       zoom: 3,
       zoomFit: true,
+      crtAspect: true,
       fitZoom: 2,
       tool: 'select',
       guides: { bands: false, horizon: false, grid: false },
@@ -155,6 +159,9 @@ export function endGesture(): void {
 }
 
 export const undo = () => useApp.temporal.getState().undo()
+
+/** Height of one picture row relative to half a pixel's width (1.2 on a 4:3 CRT, 1 for raw pixels). */
+export const useRowScale = () => useApp((s) => (s.crtAspect ? CRT_ROW_SCALE : 1))
 export const redo = () => useApp.temporal.getState().redo()
 
 // ------------------------------------------------------------------ selectors

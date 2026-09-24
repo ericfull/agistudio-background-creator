@@ -5,7 +5,7 @@ import { STARTERS } from '../../library/starters'
 import { CATEGORIES, type ElementDef } from '../../library/types'
 import { elementThumb, roomThumb } from '../../render/thumbs'
 import { elementLayer, newRoom } from '../../state/factory'
-import { actions, useApp } from '../../state/store'
+import { actions, useApp, useRowScale } from '../../state/store'
 import { THEMES, type Theme } from '../../state/types'
 import { Segmented } from '../common/Field'
 import { IconButton } from '../common/IconButton'
@@ -40,7 +40,8 @@ function useVisible<T extends HTMLElement>(): [React.RefObject<T>, boolean] {
 
 const ElementTile = memo(function ElementTile({ def }: { def: ElementDef }) {
   const [ref, visible] = useVisible<HTMLButtonElement>()
-  const url = useMemo(() => (visible ? elementThumb(def.id, TILE_W * 2, TILE_H * 2) : null), [visible, def.id])
+  const rowScale = useRowScale()
+  const url = useMemo(() => (visible ? elementThumb(def.id, TILE_W * 2, TILE_H * 2, 7, rowScale) : null), [visible, def.id, rowScale])
   return (
     <button
       ref={ref}
@@ -67,14 +68,15 @@ const ElementTile = memo(function ElementTile({ def }: { def: ElementDef }) {
 function StarterTile({ id }: { id: string }) {
   const starter = STARTERS.find((s) => s.id === id)!
   const [ref, visible] = useVisible<HTMLButtonElement>()
+  const rowScale = useRowScale()
   const url = useMemo(() => {
     if (!visible) return null
     try {
-      return roomThumb(newRoom({ ...starter.build(11) }), [], TILE_W * 2, Math.round(TILE_W * 1.05))
+      return roomThumb(newRoom({ ...starter.build(11) }), [], TILE_W * 2, Math.round(TILE_W * 1.05 * rowScale), rowScale)
     } catch {
       return null
     }
-  }, [visible, starter])
+  }, [visible, starter, rowScale])
   return (
     <button
       ref={ref}

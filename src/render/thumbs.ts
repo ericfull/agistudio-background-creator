@@ -16,6 +16,7 @@ function toDataUrl(
   w: number,
   h: number,
   pad = 4,
+  rowScale = 1,
 ): string {
   const bw = box.x1 - box.x0 + 1
   const bh = box.y1 - box.y0 + 1
@@ -42,18 +43,18 @@ function toDataUrl(
   out.height = h
   const ctx = out.getContext('2d')!
   ctx.imageSmoothingEnabled = false
-  const scale = Math.min((w - pad * 2) / (bw * 2), (h - pad * 2) / bh)
+  const scale = Math.min((w - pad * 2) / (bw * 2), (h - pad * 2) / (bh * rowScale))
   const s = scale >= 1 ? Math.floor(scale) : scale
   const dw = bw * 2 * s
-  const dh = bh * s
+  const dh = bh * s * rowScale
   ctx.drawImage(src, Math.round((w - dw) / 2), Math.round((h - dh) / 2), Math.round(dw), Math.round(dh))
   return out.toDataURL()
 }
 
 const thumbRoom: Room = newRoom()
 
-export function elementThumb(id: string, w: number, h: number, seed = 7): string | null {
-  const key = `${id}|${w}x${h}|${seed}`
+export function elementThumb(id: string, w: number, h: number, seed = 7, rowScale = 1): string | null {
+  const key = `${id}|${w}x${h}|${seed}|${rowScale}`
   const hit = cache.get(key)
   if (hit) return hit
   const def = getElement(id)
@@ -67,12 +68,12 @@ export function elementThumb(id: string, w: number, h: number, seed = 7): string
   }
   const box = def.span === 'full' ? { x0: 0, y0: 0, x1: PIC_W - 1, y1: PIC_H - 1 } : r.bbox
   if (box.x1 < 0) return null
-  const url = toDataUrl((x, y) => r.visual[y * PIC_W + x], box, w, h, def.span === 'full' ? 0 : 4)
+  const url = toDataUrl((x, y) => r.visual[y * PIC_W + x], box, w, h, def.span === 'full' ? 0 : 4, rowScale)
   cache.set(key, url)
   return url
 }
 
-export function roomThumb(room: Room, views: readonly View[], w: number, h: number): string {
+export function roomThumb(room: Room, views: readonly View[], w: number, h: number, rowScale = 1): string {
   const c: Composed = renderRoom(room, views)
-  return toDataUrl((x, y) => c.visual[y * PIC_W + x], { x0: 0, y0: 0, x1: PIC_W - 1, y1: PIC_H - 1 }, w, h, 0)
+  return toDataUrl((x, y) => c.visual[y * PIC_W + x], { x0: 0, y0: 0, x1: PIC_W - 1, y1: PIC_H - 1 }, w, h, 0, rowScale)
 }

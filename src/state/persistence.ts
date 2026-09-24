@@ -61,6 +61,7 @@ export function loadUiPrefs(): void {
       rightOpen: v.rightOpen ?? true,
       zoom: v.zoom ?? 3,
       zoomFit: v.zoomFit ?? true,
+      crtAspect: v.crtAspect ?? true,
       libraryTheme: v.libraryTheme ?? 'all',
     })
   } catch {
@@ -70,9 +71,9 @@ export function loadUiPrefs(): void {
 
 export function startUiPrefs(): () => void {
   return useApp.subscribe((s, p) => {
-    if (s.leftOpen === p.leftOpen && s.rightOpen === p.rightOpen && s.zoom === p.zoom && s.zoomFit === p.zoomFit && s.libraryTheme === p.libraryTheme) return
+    if (s.leftOpen === p.leftOpen && s.rightOpen === p.rightOpen && s.zoom === p.zoom && s.zoomFit === p.zoomFit && s.crtAspect === p.crtAspect && s.libraryTheme === p.libraryTheme) return
     try {
-      localStorage.setItem(UI_KEY, JSON.stringify({ leftOpen: s.leftOpen, rightOpen: s.rightOpen, zoom: s.zoom, zoomFit: s.zoomFit, libraryTheme: s.libraryTheme }))
+      localStorage.setItem(UI_KEY, JSON.stringify({ leftOpen: s.leftOpen, rightOpen: s.rightOpen, zoom: s.zoom, zoomFit: s.zoomFit, crtAspect: s.crtAspect, libraryTheme: s.libraryTheme }))
     } catch {
       /* storage unavailable */
     }

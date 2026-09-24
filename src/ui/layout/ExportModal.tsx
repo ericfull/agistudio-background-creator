@@ -18,7 +18,7 @@ function PictureExport() {
   const activeRoomId = useApp((s) => s.activeRoomId)
   const [which, setWhich] = useState<'current' | 'all'>('current')
   const [screen, setScreen] = useState<ExportScreen>('visual')
-  const [size, setSize] = useState('wide2')
+  const [size, setSize] = useState(() => (useApp.getState().crtAspect ? 'aspect2' : 'wide2'))
   const [frame, setFrame] = useState(false)
   const [scanlines, setScanlines] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -100,12 +100,12 @@ function SpriteExport() {
   const views = useApp((s) => s.project.views)
   const activeViewId = useApp((s) => s.activeViewId)
   const [id, setId] = useState(activeViewId ?? views[0]?.id ?? '')
-  const [scale, setScale] = useState('wide1')
+  const [scale, setScale] = useState(() => (useApp.getState().crtAspect ? 'crt' : 'wide1'))
   const view = views.find((v) => v.id === id)
   useEffect(() => {
     if (!view && views[0]) setId(views[0].id)
   }, [view, views])
-  const [xs, ys] = scale === 'native' ? [1, 1] : scale === 'wide1' ? [2, 1] : scale === 'wide2' ? [4, 2] : [8, 4]
+  const [xs, ys] = scale === 'native' ? [1, 1] : scale === 'wide1' ? [2, 1] : scale === 'crt' ? [5, 3] : scale === 'wide2' ? [4, 2] : [8, 4]
   const layout = useMemo(() => (view ? sheetLayout(view, xs, ys, `${slug(view.name)}.png`) : null), [view, xs, ys])
   const canvas = useMemo(() => (view && layout ? rgbaToCanvas(layout.width, layout.height, sheetRgba(view, layout, xs, ys)) : null), [view, layout, xs, ys])
   if (!views.length) return <div className="py-6 text-center text-muted">No sprites in this project</div>
@@ -123,11 +123,12 @@ function SpriteExport() {
       <Select label="Sprite" value={id} options={views.map((v) => ({ value: v.id, label: v.name }))} onChange={setId} />
       <Select
         label="Pixels"
-        tip="Size of each sprite pixel in the sheet. 2 × 1 matches the wide pixels seen in game."
+        tip="Size of each sprite pixel in the sheet. 2 × 1 is the raw wide pixel; 5 × 3 matches the 4:3 screen shape seen in game."
         value={scale}
         options={[
           { value: 'native', label: '1 × 1' },
           { value: 'wide1', label: '2 × 1' },
+          { value: 'crt', label: '5 × 3' },
           { value: 'wide2', label: '4 × 2' },
           { value: 'wide4', label: '8 × 4' },
         ]}

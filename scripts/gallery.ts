@@ -8,6 +8,7 @@
  *   npx tsx scripts/gallery.ts --sprites fantasy --out /tmp/x        # sprite views
  *   npx tsx scripts/gallery.ts --rolls fantasy --out /tmp/x          # generated rooms
  *   add --priority to render the priority/control screen instead of the visual
+ *   add --raw for square 2:1 pixels instead of the 4:3 CRT shape
  */
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
@@ -31,10 +32,12 @@ const flag = (name: string) => args.includes(`--${name}`)
 const out = arg('out') ?? 'gallery-out'
 mkdirSync(out, { recursive: true })
 const showPriority = flag('priority')
+// 4:3 CRT shape by default (rows 1.2x taller), as the games were seen; --raw for square 2:1 pixels
+const ROW = flag('raw') ? 1 : 1.2
 
 // Tile = picture drawn with 2:1 wide pixels (320x168) plus a 4px gutter.
 const TW = PIC_W * 2
-const TH = PIC_H
+const TH = Math.round(PIC_H * ROW)
 const GAP = 4
 
 function sheet(rooms: Room[], views: View[], cols: number, file: string) {
@@ -47,11 +50,12 @@ function sheet(rooms: Room[], views: View[], cols: number, file: string) {
     const src = showPriority ? priority : visual
     const ox = GAP + (n % cols) * (TW + GAP)
     const oy = GAP + Math.floor(n / cols) * (TH + GAP)
-    for (let y = 0; y < PIC_H; y++) {
+    for (let ty = 0; ty < TH; ty++) {
+      const y = Math.min(PIC_H - 1, Math.floor(ty / ROW))
       for (let x = 0; x < PIC_W; x++) {
         const c = EGA_RGB[src[y * PIC_W + x] & 15]
         for (let d = 0; d < 2; d++) {
-          const o = ((oy + y) * w + ox + x * 2 + d) * 3
+          const o = ((oy + ty) * w + ox + x * 2 + d) * 3
           rgb[o] = c[0]
           rgb[o + 1] = c[1]
           rgb[o + 2] = c[2]

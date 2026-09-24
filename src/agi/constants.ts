@@ -20,5 +20,11 @@ export const CTRL_COND = 1
 export const CTRL_TRIGGER = 2
 export const CTRL_WATER = 3
 
+/**
+ * The 320x200 AGI screen filled a 4:3 CRT, so each row was 1.2x as tall as a
+ * 320-wide pixel is wide. A picture pixel therefore displays as 2 wide x 1.2 tall.
+ */
+export const CRT_ROW_SCALE = 1.2
+
 export const DEFAULT_PRIORITY_BASE = 48
 export const DEFAULT_HORIZON = 36

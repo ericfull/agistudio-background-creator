@@ -7,7 +7,7 @@ import { rasterView, renderRoom } from '../../render/room'
 import { BUILTIN_VIEWS } from '../../sprites/library'
 import { resolveCel } from '../../sprites/render'
 import type { View } from '../../sprites/types'
-import { actions, useActiveRoom, useApp, type Screen } from '../../state/store'
+import { actions, useActiveRoom, useApp, useRowScale, type Screen } from '../../state/store'
 import type { Dir } from '../../state/types'
 import { drawEgo, egoPriority, entryPoint, findSpawn, LOOP_FOR, step, type Ego, type WalkEnv } from '../../walk/simulate'
 import { Field, Select, Slider, Toggle } from '../common/Field'
@@ -15,7 +15,7 @@ import { IconButton } from '../common/IconButton'
 import { Section } from '../common/Section'
 import { SidePanel } from '../common/SidePanel'
 import { CelView } from '../sprites/CelView'
-import { useFitZoom } from '../rooms/CanvasArea'
+import { AspectToggle, useFitZoom } from '../rooms/CanvasArea'
 
 const KEY_DIR: Record<string, Dir> = {
   arrowup: 'n', w: 'n', arrowdown: 's', s: 's', arrowleft: 'w', a: 'w', arrowright: 'e', d: 'e',
@@ -182,14 +182,15 @@ export function WalkWorkspace() {
 
   const chars = views.filter((v) => v.kind === 'character' && v.loops.length >= 4)
   const builtinChars = BUILTIN_VIEWS.filter((v) => v.kind === 'character')
+  const rowScale = useRowScale()
   const W = PIC_W * 2 * fit
-  const H = PIC_H * fit
+  const H = Math.round(PIC_H * fit * rowScale)
 
   const placeEgo = (e: React.PointerEvent) => {
     if (!ego.current) return
     const r = cvRef.current!.getBoundingClientRect()
     const x = Math.floor((e.clientX - r.left) / (2 * fit))
-    const y = Math.floor((e.clientY - r.top) / fit)
+    const y = Math.floor((e.clientY - r.top) / (fit * rowScale))
     const spot = findSpawn(env, ego.current.w, x, y)
     if (spot) {
       ego.current.x = spot.x
@@ -207,6 +208,8 @@ export function WalkWorkspace() {
             <IconButton icon={ImageIcon} tip="Visual screen" active={screen === 'visual'} onClick={() => setScreen('visual')} />
             <IconButton icon={Rows3} tip="Priority screen" active={screen === 'priority'} onClick={() => setScreen('priority')} />
             <IconButton icon={Droplet} tip="Control screen" active={screen === 'control'} onClick={() => setScreen('control')} />
+            <div className="mx-1 h-5 w-px bg-line" />
+            <AspectToggle />
           </div>
           <div className="flex-1" />
           <div className="flex items-center gap-3 text-[11px] text-muted">

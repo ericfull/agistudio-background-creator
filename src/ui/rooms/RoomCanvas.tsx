@@ -10,7 +10,7 @@ import { getElement } from '../../library'
 import { paintScreen } from '../../render/draw'
 import { layerRaster, renderRoom } from '../../render/room'
 import { elementLayer, viewLayer } from '../../state/factory'
-import { actions, activeRoom, beginGesture, endGesture, useActiveRoom, useApp } from '../../state/store'
+import { actions, activeRoom, beginGesture, endGesture, useActiveRoom, useApp, useRowScale } from '../../state/store'
 import type { Layer, Room } from '../../state/types'
 import type { View } from '../../sprites/types'
 import { UI } from '../tokens'
@@ -74,8 +74,9 @@ export function RoomCanvas({ zoom }: { zoom: number }) {
   const [pending, setPending] = useState<{ kind: 'line' | 'step'; pts: Pt[]; horizontalFirst?: boolean } | null>(null)
   const [cursor, setCursor] = useState<Pt | null>(null)
 
+  const rowScale = useRowScale()
   const W = PIC_W * 2 * zoom
-  const H = PIC_H * zoom
+  const H = Math.round(PIC_H * zoom * rowScale)
 
   // picture
   useEffect(() => {
@@ -101,7 +102,7 @@ export function RoomCanvas({ zoom }: { zoom: number }) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     ctx.clearRect(0, 0, W, H)
     const sx = 2 * zoom
-    const sy = zoom
+    const sy = zoom * rowScale
     ctx.lineWidth = 1
 
     if (guides.grid) {
@@ -192,14 +193,14 @@ export function RoomCanvas({ zoom }: { zoom: number }) {
       })
       ctx.stroke()
     }
-  }, [room, views, selectedId, guides, zoom, pending, pending ? cursor : null, W, H])
+  }, [room, views, selectedId, guides, zoom, rowScale, pending, pending ? cursor : null, W, H])
 
   const toLogical = useCallback(
     (e: { clientX: number; clientY: number }): Pt => {
       const rect = ovRef.current!.getBoundingClientRect()
-      return [Math.floor((e.clientX - rect.left) / (2 * zoom)), Math.floor((e.clientY - rect.top) / zoom)]
+      return [Math.floor((e.clientX - rect.left) / (2 * zoom)), Math.floor((e.clientY - rect.top) / (zoom * rowScale))]
     },
-    [zoom],
+    [zoom, rowScale],
   )
 
   const pendingRef = useRef(pending)
@@ -253,7 +254,7 @@ export function RoomCanvas({ zoom }: { zoom: number }) {
         const r = layerRaster(sel, room, views)
         if (r.bbox.x1 >= 0) {
           const hx = (r.bbox.x1 + 1) * 2 * zoom
-          const hy = (r.bbox.y1 + 1) * zoom
+          const hy = (r.bbox.y1 + 1) * zoom * rowScale
           const rect = ovRef.current!.getBoundingClientRect()
           const px = e.clientX - rect.left
           const py = e.clientY - rect.top
