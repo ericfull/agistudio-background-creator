@@ -54,7 +54,7 @@ export const buildings: ElementDef[] = [
         ],
       },
       { key: 'width', label: 'Width', type: 'int', min: 36, max: 150, default: 72 },
-      { key: 'floors', label: 'Floors (clamped to fit)', type: 'int', min: 1, max: 6, default: 2 },
+      { key: 'floors', label: 'Floors', type: 'int', min: 1, max: 6, default: 2 },
       { key: 'cols', label: 'Windows across', type: 'int', min: 1, max: 8, default: 4 },
       { key: 'door', label: 'Door', type: 'bool', default: true },
       { key: 'lit', label: 'Lit windows %', type: 'int', min: 0, max: 100, default: 20 },

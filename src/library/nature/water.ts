@@ -43,7 +43,7 @@ export const water: ElementDef[] = [
       { key: 'waves', label: 'Waves', type: 'int', min: 0, max: 100, default: 45 },
       { key: 'foam', label: 'White caps', type: 'bool', default: false },
       { key: 'haze', label: 'Horizon line', type: 'bool', default: true },
-      { key: 'depth', label: 'Depth (rows)', type: 'int', min: 4, max: 168, default: 168 },
+      { key: 'depth', label: 'Depth', type: 'int', min: 4, max: 168, default: 168 },
     ],
     defaultPriority: 'rows',
     perspective: false,

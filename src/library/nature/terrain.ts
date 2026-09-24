@@ -597,7 +597,7 @@ export const terrain: ElementDef[] = [
       { key: 'width', label: 'Width', type: 'int', min: 3, max: 30, default: 12 },
       { key: 'wobble', label: 'Wobble', type: 'int', min: 0, max: 12, default: 3 },
       { key: 'pebbles', label: 'Pebbles', type: 'int', min: 0, max: 40, default: 8 },
-      { key: 'ford', label: 'Ford (walk across water)', type: 'bool', default: false },
+      { key: 'ford', label: 'Ford', type: 'bool', default: false },
     ],
     defaultPriority: 'rows',
     perspective: false,

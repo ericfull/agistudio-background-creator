@@ -209,7 +209,7 @@ export const skies: ElementDef[] = [
     themes: ['nature'],
     category: 'sky',
     tags: ['sun', 'moon'],
-    roles: { body: { label: 'Body', color: 14 }, ray: { label: 'Rays', color: 14 }, sky: { label: 'Sky (for crescent)', color: 9 } },
+    roles: { body: { label: 'Body', color: 14 }, ray: { label: 'Rays', color: 14 }, sky: { label: 'Crescent sky', color: 9 } },
     params: [
       {
         key: 'kind', label: 'Kind', type: 'select', default: 'sun',
