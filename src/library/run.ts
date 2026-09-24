@@ -12,7 +12,7 @@ export function perspectiveScale(room: Pick<Room, 'horizon' | 'perspective'>, y:
 }
 
 export function elementCtx(def: ElementDef, layer: ElementLayer, room: Room): KitCtx {
-  const persp = def.perspective ? perspectiveScale(room, layer.y) : 1
+  const persp = (layer.perspective ?? def.perspective) ? perspectiveScale(room, layer.y) : 1
   return {
     x: layer.x,
     y: layer.y,

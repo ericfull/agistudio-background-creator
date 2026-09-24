@@ -11,8 +11,12 @@ import type { ElementLayer, Layer, Room, ViewLayer } from '../state/types'
 type Entry = { key: string; dep: unknown; raster: LayerRaster }
 const cache = new WeakMap<Layer, Entry>()
 
-function roomKey(room: Room): string {
-  return `${room.horizon}|${room.priorityBase}|${room.perspective.far}|${room.perspective.near}`
+/** Room settings an element's drawing depends on (so unrelated slider moves don't redraw it). */
+function roomKey(layer: ElementLayer, room: Room): string {
+  const def = getElement(layer.elementId)
+  const persp = layer.perspective ?? def?.perspective ?? false
+  // every element may read horizon and priority base through its kit context
+  return persp ? `${room.horizon}|${room.priorityBase}|${room.perspective.far}|${room.perspective.near}` : `${room.horizon}|${room.priorityBase}`
 }
 
 function emptyRaster(): LayerRaster {
@@ -52,7 +56,7 @@ export function rasterView(layer: ViewLayer, view: View | undefined, frame = 0):
       const x = layer.x + cx
       const y = top + cy
       if (x < 0 || y < 0 || x >= PIC_W || y >= PIC_H) continue
-      out.visual[y * PIC_W + x] = v
+      out.visual[y * PIC_W + x] = layer.recolor ? layer.recolor[v] : v
       out.priority[y * PIC_W + x] = pri
       mark(x, y)
     }
@@ -70,7 +74,7 @@ export function rasterView(layer: ViewLayer, view: View | undefined, frame = 0):
 
 export function layerRaster(layer: Layer, room: Room, views: readonly View[]): LayerRaster {
   const view = layer.kind === 'view' ? views.find((v) => v.id === layer.viewId) : undefined
-  const key = layer.kind === 'element' ? roomKey(room) : ''
+  const key = layer.kind === 'element' ? roomKey(layer, room) : ''
   const hit = cache.get(layer)
   if (hit && hit.key === key && hit.dep === view) return hit.raster
   let raster: LayerRaster
@@ -114,5 +118,6 @@ export function renderRoom(room: Room, views: readonly View[], opts: RenderOpts 
     priorityBase: room.priorityBase,
     mood: MOODS[room.mood]?.map,
     colorSwap: room.colorSwap,
+    background: room.background,
   })
 }

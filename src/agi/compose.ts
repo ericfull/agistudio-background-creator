@@ -1,5 +1,5 @@
 import type { PriorityMode } from '../state/types'
-import { PIC_SIZE, PIC_W, PRI_BASELINE, PRI_ROWS, T } from './constants'
+import { PIC_SIZE, PIC_W, PRI_BASELINE, PRI_CLEAR, PRI_ROWS, T } from './constants'
 import { IDENTITY_MAP } from './palette'
 import { bandTable } from './priority'
 import type { BBox } from './raster'
@@ -22,6 +22,8 @@ export interface ComposeLayer {
 
 export interface ComposeOptions {
   priorityBase: number
+  /** Color where nothing was drawn (default white, as in AGI). */
+  background?: number
   mood?: readonly number[]
   colorSwap?: readonly number[]
 }
@@ -38,13 +40,14 @@ function chain(a: readonly number[], b: readonly number[]): number[] {
 /**
  * Builds the room's visual and priority screens from layer buffers.
  * Pass 1 paints visuals and depth bottom-to-top; pass 2 stamps every layer's
- * control pixels (0–3) on top so walls and triggers are never hidden.
+ * control pixels (0–3) on top so walls and triggers are never hidden, and
+ * lets 'clear' pixels from later layers remove control drawn earlier.
  */
 export function compose(layers: readonly ComposeLayer[], opts: ComposeOptions): Composed {
   const bands = bandTable(opts.priorityBase)
   const swap = opts.colorSwap ?? IDENTITY_MAP
   const moodMap = chain(swap, opts.mood ?? IDENTITY_MAP)
-  const visual = new Uint8Array(PIC_SIZE).fill(moodMap[15])
+  const visual = new Uint8Array(PIC_SIZE).fill(moodMap[opts.background ?? 15])
   const priority = new Uint8Array(PIC_SIZE).fill(4)
 
   for (const L of layers) {
@@ -60,7 +63,7 @@ export function compose(layers: readonly ComposeLayer[], opts: ComposeOptions): 
         const v = lv[i]
         const p = lp[i]
         if (v !== T) visual[i] = map[v]
-        if (p !== T && p >= 4) {
+        if (p !== T && p >= 4 && p <= PRI_BASELINE) {
           priority[i] = p === PRI_ROWS ? rowBand : p === PRI_BASELINE ? anchorBand : p
         } else if (v !== T && dp !== 'none') {
           priority[i] = dp === 'rows' ? rowBand : dp === 'baseline' ? anchorBand : dp
@@ -69,6 +72,8 @@ export function compose(layers: readonly ComposeLayer[], opts: ComposeOptions): 
     }
   }
 
+  // depth before any control, so 'clear' can restore it
+  const depth = priority.slice()
   for (const L of layers) {
     if (!L.controlOn) continue
     const { priority: lp, bbox } = L.raster
@@ -78,6 +83,7 @@ export function compose(layers: readonly ComposeLayer[], opts: ComposeOptions): 
         const i = y * PIC_W + x
         const p = lp[i]
         if (p < 4) priority[i] = p
+        else if (p === PRI_CLEAR) priority[i] = depth[i]
       }
     }
   }

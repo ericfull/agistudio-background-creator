@@ -1,5 +1,6 @@
 import type { ColorRef, PenShape, PicCommand, PriorityRef, Pt } from '../agi/commands'
 import { PIC_H, PIC_SIZE, PIC_W, T } from '../agi/constants'
+import { bandForY } from '../agi/priority'
 import { agiLine, Raster } from '../agi/raster'
 import type { Rng } from '../agi/rng'
 
@@ -15,8 +16,8 @@ export interface KitCtx {
   priorityBase: number
 }
 
-export type ControlKind = 'wall' | 'cond' | 'trigger' | 'water'
-const CTRL: Record<ControlKind, number> = { wall: 0, cond: 1, trigger: 2, water: 3 }
+export type ControlKind = 'wall' | 'cond' | 'trigger' | 'water' | 'clear'
+const CTRL: Record<ControlKind, PriorityRef> = { wall: 0, cond: 1, trigger: 2, water: 3, clear: 'clear' }
 
 type LPt = readonly [number, number]
 
@@ -24,16 +25,6 @@ function sameColor(a: ColorRef | null, b: ColorRef | null): boolean {
   if (a === null || b === null) return a === b
   if (typeof a === 'number' || typeof b === 'number') return a === b
   return a.role === b.role
-}
-
-function pointInPoly(px: number, py: number, P: readonly Pt[]): boolean {
-  let c = false
-  for (let i = 0, j = P.length - 1; i < P.length; j = i++) {
-    const [xi, yi] = P[i]
-    const [xj, yj] = P[j]
-    if (yi > py !== yj > py && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) c = !c
-  }
-  return c
 }
 
 /**
@@ -49,7 +40,7 @@ export class Kit {
   private curVis: ColorRef | null = null
   private curPri: PriorityRef | null = null
   private priMode: PriorityRef | null = null
-  private ctrl: number | null = null
+  private ctrl: PriorityRef | null = null
   private penKey = ''
 
   constructor(readonly ctx: KitCtx) {}
@@ -101,7 +92,8 @@ export class Kit {
       this.setPri(this.ctrl)
     } else {
       this.setVis(color)
-      this.setPri(this.priMode)
+      // 'default' (not off) so later parts don't inherit an earlier part's depth
+      this.setPri(this.priMode ?? 'default')
     }
   }
 
@@ -250,6 +242,16 @@ export class Kit {
     this.control('water', () => this.poly(pts, 0))
   }
 
+  /** Remove control drawn by earlier layers inside a shape (e.g. a bridge deck over water). */
+  clearControl(pts: readonly LPt[]): void {
+    this.control('clear', () => this.poly(pts, 0))
+  }
+
+  /** Priority band at a local row (for fixed-depth parts). */
+  bandAt(ly: number): number {
+    return bandForY(Math.round(this.Y(ly)), this.ctx.priorityBase)
+  }
+
   /** Solid wall area (e.g. the footprint of a building). */
   wallArea(pts: readonly LPt[]): void {
     this.control('wall', () => this.poly(pts, 0))
@@ -279,14 +281,30 @@ export class Kit {
         if (x >= 0 && y >= 0 && x < PIC_W && y < PIC_H) edge[y * PIC_W + x] = 1
       })
     }
+    // Scanline version of the even-odd point-in-polygon test: a pixel is
+    // inside when an odd number of edge crossings lie strictly to its right.
     const inside = new Uint8Array(PIC_SIZE)
     let count = 0
+    const xs: number[] = []
     for (let y = y0; y <= y1; y++) {
-      for (let x = x0; x <= x1; x++) {
-        const i = y * PIC_W + x
-        if (!edge[i] && pointInPoly(x, y, P)) {
-          inside[i] = 1
-          count++
+      xs.length = 0
+      for (let i = 0, j = P.length - 1; i < P.length; j = i++) {
+        const [xi, yi] = P[i]
+        const [xj, yj] = P[j]
+        if (yi > y !== yj > y) xs.push(((xj - xi) * (y - yi)) / (yj - yi) + xi)
+      }
+      if (xs.length < 2) continue
+      xs.sort((a, b) => a - b)
+      const n = xs.length
+      for (let k = n % 2 === 0 ? 0 : 1; k + 1 < n; k += 2) {
+        const a = Math.max(x0, Math.floor(xs[k]) + (Number.isInteger(xs[k]) ? 0 : 1))
+        const b = Math.min(x1, Math.ceil(xs[k + 1]) - 1)
+        for (let x = a; x <= b; x++) {
+          const i = y * PIC_W + x
+          if (!edge[i]) {
+            inside[i] = 1
+            count++
+          }
         }
       }
     }

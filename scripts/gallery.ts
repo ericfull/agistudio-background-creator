@@ -6,6 +6,7 @@
  *   npx tsx scripts/gallery.ts --id oak --out /tmp/x                 # one element, many seeds
  *   npx tsx scripts/gallery.ts --starters fantasy --out /tmp/x       # room starters
  *   npx tsx scripts/gallery.ts --sprites fantasy --out /tmp/x        # sprite views
+ *   npx tsx scripts/gallery.ts --rolls fantasy --out /tmp/x          # generated rooms
  *   add --priority to render the priority/control screen instead of the visual
  */
 import { mkdirSync } from 'node:fs'
@@ -79,6 +80,7 @@ const theme = arg('theme')
 const id = arg('id')
 const starters = arg('starters')
 const sprites = arg('sprites')
+const rolls = arg('rolls')
 
 if (id) {
   const def = getElement(id)
@@ -101,6 +103,11 @@ if (id) {
   const list = STARTERS.filter((s) => starters === 'all' || s.theme === starters)
   const rooms = list.map((s) => newRoom({ ...s.build(11), name: s.name }))
   sheet(rooms, [], 2, `starters-${starters}${showPriority ? '-pri' : ''}.png`)
+} else if (rolls) {
+  const { generateRoom } = await import('../src/generator/recipes')
+  const themes = rolls === 'all' ? ['nature', 'fantasy', 'scifi', 'modern', 'spooky'] : [rolls]
+  const rooms = themes.flatMap((t) => [1, 2, 3, 4, 5, 6].map((seed) => generateRoom({ theme: t as Room['theme'], seed: seed * 7919 })))
+  sheet(rooms, [], 3, `rolls-${rolls}${showPriority ? '-pri' : ''}.png`)
 } else if (sprites) {
   // Lazy import so element authors aren't blocked by sprite work.
   const mod = await import('../src/sprites/library/index')

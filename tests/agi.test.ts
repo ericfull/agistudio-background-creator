@@ -165,3 +165,64 @@ describe('compose', () => {
     expect(at(compose([{ ...l, moodExempt: true }], { priorityBase: 48, mood: night }).visual, 0, 0)).toBe(14)
   })
 })
+
+describe('control clearing and default depth', () => {
+  it('lets a later layer clear control drawn earlier (bridge over a river)', () => {
+    const river = new Raster().run([{ op: 'visual', color: 1 }, { op: 'priority', value: 3 }, { op: 'line', pts: [[0, 120], [40, 120]] }])
+    const deck = new Raster().run([{ op: 'visual', color: 6 }, { op: 'priority', value: 'clear' }, { op: 'line', pts: [[10, 120], [20, 120]] }])
+    const L = (r: Raster) => ({ raster: r, defaultPriority: 'rows' as const, anchorY: 120, controlOn: true, moodExempt: false })
+    const out = compose([L(river), L(deck)], { priorityBase: 48 })
+    expect(at(out.priority, 5, 120)).toBe(3)
+    expect(at(out.priority, 15, 120)).toBe(bandForY(120))
+    expect(at(out.visual, 15, 120)).toBe(6)
+  })
+  it('treats the default tag like untouched depth', () => {
+    const r = new Raster().run([{ op: 'visual', color: 2 }, { op: 'priority', value: 'default' }, { op: 'line', pts: [[0, 90], [3, 90]] }])
+    const out = compose([{ raster: r, defaultPriority: 'baseline', anchorY: 150, controlOn: true, moodExempt: false }], { priorityBase: 48 })
+    expect(at(out.priority, 1, 90)).toBe(bandForY(150))
+  })
+})
+
+describe('soft default depth', () => {
+  it('keeps control lines when later artwork in the same element draws over them', () => {
+    const r = new Raster().run([
+      { op: 'priority', value: 0 },
+      { op: 'line', pts: [[0, 100], [20, 100]] },
+      { op: 'visual', color: 2 },
+      { op: 'priority', value: 'default' },
+      { op: 'line', pts: [[0, 100], [20, 100]] },
+    ])
+    expect(r.priority[100 * PIC_W + 5]).toBe(0)
+    expect(r.visual[100 * PIC_W + 5]).toBe(2)
+  })
+})
+
+describe('fill tool regions', () => {
+  it('covers exactly the connected area of one color', async () => {
+    const { floodRuns } = await import('../src/agi/region')
+    const plane = new Uint8Array(PIC_W * 168).fill(15)
+    // a box outline of color 0 from (10,10) to (20,20)
+    for (let i = 10; i <= 20; i++) {
+      plane[10 * PIC_W + i] = 0
+      plane[20 * PIC_W + i] = 0
+      plane[i * PIC_W + 10] = 0
+      plane[i * PIC_W + 20] = 0
+    }
+    const inside = floodRuns(plane, 15, 15)
+    expect(inside.length).toBe(9)
+    expect(inside.every(([a, b]) => a === 11 && b === 19)).toBe(true)
+    const outside = floodRuns(plane, 0, 0)
+    const count = outside.reduce((n, [a, b]) => n + b - a + 1, 0)
+    expect(count).toBe(PIC_W * 168 - 121)
+  })
+})
+
+describe('moods', () => {
+  it('keep foliage (green) distinct from grass (light green) and sky', async () => {
+    const { MOODS } = await import('../src/agi/moods')
+    for (const [id, m] of Object.entries(MOODS)) {
+      expect(m.map[2], `${id}: leaves vs grass`).not.toBe(m.map[10])
+      expect(m.map.length).toBe(16)
+    }
+  })
+})

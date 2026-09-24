@@ -9,6 +9,10 @@ export const T = 255
 /** Symbolic priority tags stored in layer priority buffers, resolved during composition. */
 export const PRI_ROWS = 16
 export const PRI_BASELINE = 17
+/** Removes control (walls, water...) drawn by earlier layers, e.g. a bridge deck over a river. */
+export const PRI_CLEAR = 18
+/** Explicitly "use the layer's default depth" (resets tags from earlier parts). */
+export const PRI_DEFAULT = 19
 
 /** Control values live in the priority screen (0–3), as in AGI. */
 export const CTRL_WALL = 0

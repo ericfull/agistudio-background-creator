@@ -1,5 +1,5 @@
 import type { ColorRef, PicCommand, PriorityRef } from './commands'
-import { PIC_H, PIC_SIZE, PIC_W, PRI_BASELINE, PRI_ROWS, T } from './constants'
+import { PIC_H, PIC_SIZE, PIC_W, PRI_BASELINE, PRI_CLEAR, PRI_DEFAULT, PRI_ROWS, T } from './constants'
 import { defaultTexture, plotPattern, type PenState } from './pen'
 
 export type ColorResolver = (c: ColorRef) => number
@@ -10,6 +10,8 @@ const clampCoord = (v: number) => Math.max(-LIMIT, Math.min(LIMIT, Math.round(v)
 export function encodePriority(p: PriorityRef): number {
   if (p === 'rows') return PRI_ROWS
   if (p === 'baseline') return PRI_BASELINE
+  if (p === 'clear') return PRI_CLEAR
+  if (p === 'default') return PRI_DEFAULT
   return Math.max(0, Math.min(15, p | 0))
 }
 
@@ -111,7 +113,9 @@ export class Raster {
       wrote = true
     }
     if (this.priOn) {
-      this.priority[i] = this.priValue
+      // 'default' is a soft write: it never erases control (or 'clear') drawn earlier
+      const cur = this.priority[i]
+      if (this.priValue !== PRI_DEFAULT || (cur > 3 && cur !== PRI_CLEAR)) this.priority[i] = this.priValue
       wrote = true
     }
     if (wrote) {

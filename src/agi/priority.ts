@@ -31,13 +31,14 @@ export function bandStarts(base = DEFAULT_PRIORITY_BASE): { band: number; y: num
 }
 
 /**
- * The effective priority at a pixel. Control values (0–3) don't carry depth,
- * so AGI scans downward to the first real priority below.
+ * The priority an object pixel is compared against. Control lines (0–2) carry
+ * no depth, so AGI scans down to the first other value; water (3) counts as a
+ * low priority, and running off the bottom means "draw" (ScummVM checkControlPixel).
  */
 export function effectivePriority(priority: Uint8Array, x: number, y: number): number {
   for (let yy = y; yy < PIC_H; yy++) {
     const p = priority[yy * PIC_W + x]
-    if (p >= 4) return p
+    if (p > 2) return p
   }
-  return 15
+  return 0
 }

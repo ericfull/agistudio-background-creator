@@ -36,6 +36,8 @@ export interface ElementLayer extends LayerBase {
   colorMap: Record<string, number>
   priority: PriorityMode | 'auto'
   controlOn: boolean
+  /** Override the element's own perspective setting. */
+  perspective?: boolean
 }
 
 export interface PaintLayer extends LayerBase {
@@ -58,6 +60,8 @@ export interface ViewLayer extends LayerBase {
   /** Control line drawn along the base of the sprite, like AGI add.to.pic margins. */
   margin: null | 0 | 1 | 2 | 3
   animate: boolean
+  /** Optional 16-entry recolor applied to this stamp (set by baking a color swap). */
+  recolor?: number[]
 }
 
 export type Layer = ElementLayer | PaintLayer | ViewLayer
@@ -72,11 +76,19 @@ export interface EdgeInfo {
   blocked?: boolean
 }
 
+export interface LookSpec {
+  id: string
+  params: Record<string, ParamValue>
+  colorMap: Record<string, number>
+}
+
 export interface EdgeProfile {
   horizon: number
   ground: string
   recipe: string
   edges: Partial<Record<Dir, EdgeInfo>>
+  /** Sky, backdrop and ground reused by neighbors so rooms continue seamlessly. */
+  look?: { sky?: LookSpec; backdrop?: LookSpec; ground?: LookSpec }
 }
 
 export type MoodId = 'day' | 'dusk' | 'night' | 'storm' | 'autumn' | 'winter' | 'haunted'
@@ -90,6 +102,8 @@ export interface Room {
   perspective: { far: number; near: number }
   mood: MoodId
   colorSwap: number[]
+  /** Color of pixels nothing was drawn on (AGI pictures start white). */
+  background?: number
   layers: Layer[]
   links: Partial<Record<Dir, string>>
   edgeProfile?: EdgeProfile

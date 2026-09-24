@@ -1,0 +1,95 @@
+@import 'tailwindcss';
+
+/* The interface uses exactly these 8 colors. EGA artwork colors are content, not UI. */
+@theme {
+  --color-*: initial;
+  --color-bg: #0f1a30;
+  --color-panel: #1a2a4a;
+  --color-line: #2f4677;
+  --color-text: #f2eee6;
+  --color-muted: #8c9bba;
+  --color-accent: #f2a541;
+  --color-danger: #e0574f;
+  --color-shadow: #060b17;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --radius-sm: 2px;
+  --radius: 3px;
+  --radius-md: 4px;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  user-select: none;
+}
+
+.shadow-panel {
+  box-shadow: 4px 4px 0 var(--color-shadow);
+}
+
+.shadow-modal {
+  box-shadow: 6px 6px 0 var(--color-shadow);
+}
+
+canvas.pixel {
+  image-rendering: pixelated;
+}
+
+input[type='range'] {
+  appearance: none;
+  height: 4px;
+  background: var(--color-line);
+  border-radius: 2px;
+  outline: none;
+}
+input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  width: 10px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--color-accent);
+  border: 0;
+}
+input[type='number'],
+input[type='text'],
+select {
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-line);
+  border-radius: 3px;
+  padding: 2px 6px;
+  font: inherit;
+  outline: none;
+}
+input:focus,
+select:focus {
+  border-color: var(--color-accent);
+}
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}

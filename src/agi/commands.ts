@@ -1,7 +1,7 @@
 /** A color reference: a literal EGA index (0–15) or a named element role. */
 export type ColorRef = number | { role: string }
 /** A priority reference: literal 0–15, or a symbolic mode resolved at composition. */
-export type PriorityRef = number | 'rows' | 'baseline'
+export type PriorityRef = number | 'rows' | 'baseline' | 'clear' | 'default'
 export type Pt = [number, number]
 export type PenShape = 'circle' | 'square'
 
