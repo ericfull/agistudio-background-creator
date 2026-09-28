@@ -35,7 +35,11 @@ No pixel art skills required. No anti-aliasing allowed.
 
 ## Getting it running
 
-You'll need [Node.js](https://nodejs.org) installed. Then, in the project folder, run:
+You'll need [Node.js](https://nodejs.org) installed.
+
+**On a Mac,** double-click **Start BG Creator.command** in the project folder. It installs everything the first time, starts the app and opens it in your browser. Close the Terminal window when you're done. (If macOS says it can't be opened, right-click the file, choose **Open**, then click **Open** again.)
+
+**Anywhere else,** run these in the project folder:
 
 ```bash
 npm install
